@@ -43,6 +43,11 @@ def get_D_x_K_for_all_x(df: pd.DataFrame, m_x_k: dict) -> dict:
     return dictionary
 
 
+def get_r_xi_xl_K(m_x_k: dict) -> dict:
+    dictionary = {}
+    return dictionary
+
+
 def main():
     filename = "data.csv"
     df = load_csv(filename)
@@ -78,6 +83,10 @@ def main():
     print_task(3.4)
     print(label)
     print(tabulate(table_data, headers=col_names, tablefmt="fancy_grid"))
+
+    # r*[xi,xl/K1]
+
+    # r*[xi,xl/K2]
 
 
 if __name__ == '__main__':
