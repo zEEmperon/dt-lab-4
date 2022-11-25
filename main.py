@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from tabulate import tabulate
+from itertools import combinations
 
 
 def load_csv(filename):
@@ -45,6 +46,10 @@ def get_D_x_K_for_all_x(df: pd.DataFrame, m_x_k: dict) -> dict:
 
 def get_r_xi_xl_K(m_x_k: dict) -> dict:
     dictionary = {}
+    for comb_tuple in combinations(m_x_k, 2):
+        value = m_x_k[comb_tuple[0]] / m_x_k[comb_tuple[1]]
+        key = "{} = r * {}".format(comb_tuple[0], comb_tuple[1])
+        dictionary[key] = value
     return dictionary
 
 
@@ -84,9 +89,18 @@ def main():
     print(label)
     print(tabulate(table_data, headers=col_names, tablefmt="fancy_grid"))
 
-    # r*[xi,xl/K1]
+    # r*[xi,xl/K1], r*[xi,xl/K2]
+    label = "Значення коефіцієнтів парної кореляції між ознаками за умови, що екземпляр належить до К1"
+    r_xi_xl_K1 = get_r_xi_xl_K(m_x_K1)
+    r_xi_xl_K2 = get_r_xi_xl_K(m_x_K2)
 
-    # r*[xi,xl/K2]
+    col_names = ["Ознаки", "Значення кореляції (r) для К1", "Значення кореляції (r) для К2"]
+    table_data = np.vstack(([*r_xi_xl_K1.keys()], [*r_xi_xl_K1.values()], [*r_xi_xl_K2.values()])).T
+
+    print()
+    print_task(3.5)
+    print(label)
+    print(tabulate(table_data, headers=col_names, tablefmt="fancy_grid"))
 
 
 if __name__ == '__main__':
