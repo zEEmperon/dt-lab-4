@@ -102,6 +102,9 @@ def main():
     print(label)
     print(tabulate(table_data, headers=col_names, tablefmt="fancy_grid"))
 
+    # 3.6
+    # (X3 = r * X4), (X1 = r * X9) - статистично незначимі
+
 
 if __name__ == '__main__':
     main()
