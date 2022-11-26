@@ -69,9 +69,12 @@ def main():
     df_K1 = get_K1(df)
     df_K2 = get_K2(df)
 
+    df_without_class_attr = df.drop('Class', axis=1)
+    df_K1_without_class_attr = df_K1.drop('Class', axis=1)
+    df_K2_without_class_attr = df_K2.drop('Class', axis=1)
+
     # M*[xi/K1], D*[xi/K1]
     label = "Математичне сподівання і дисперсія кожної ознаки для К1"
-    df_K1_without_class_attr = df_K1.drop('Class', axis=1)
     m_x_K1 = get_M_x_K_for_all_x(df_K1_without_class_attr)
     d_x_K1 = get_D_x_K_for_all_x(df_K1_without_class_attr, m_x_K1)
 
@@ -85,7 +88,6 @@ def main():
 
     # M*[xi/K2], D*[xi/K2]
     label = "Математичне сподівання і дисперсія кожної ознаки для К2"
-    df_K2_without_class_attr = df_K2.drop('Class', axis=1)
     m_x_K2 = get_M_x_K_for_all_x(df_K2_without_class_attr)
     d_x_K2 = get_D_x_K_for_all_x(df_K2_without_class_attr, m_x_K2)
 
@@ -149,6 +151,31 @@ def main():
     print(label)
     print("D*[G/K1] =", d_g_K1)
     print("D*[G/K2] =", d_g_K2)
+
+    # Дослідження коефіцієнтів отриманої дискримінантної функції
+    label = "Коефіцієнти дискримінантної функції"
+    K1_res = df_K1_without_class_attr * beta_coefs
+    K2_res = df_K2_without_class_attr * beta_coefs
+
+    K1_res_m = K1_res.mean()
+    K2_res_m = K2_res.mean()
+
+    thresholds_values = (K1_res_m + K2_res_m) / 2
+
+    general_set_results = df_without_class_attr * beta_coefs
+    general_set_comparison_results = general_set_results >= thresholds_values
+
+    incorrect_classified_instances = (general_set_comparison_results['X9'].astype("int") - df['Class']) != 0
+
+    col_names = ["Ознака", "Пороговий коефіцієнт"]
+    table_data = np.vstack((df_without_class_attr.columns, thresholds_values)).T
+
+    print()
+    print_task(3.9)
+    print(label)
+    print(tabulate(table_data, headers=col_names, tablefmt="fancy_grid"))
+
+    print("Число неправильно класифікованих примірників:", incorrect_classified_instances.sum())
 
 
 if __name__ == '__main__':
