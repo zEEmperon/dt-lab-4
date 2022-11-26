@@ -61,9 +61,42 @@ def get_D_G_K(d_x_K: np.array, beta_coefs: np.array) -> int:
     return sum(d_x_K * beta_coefs ** 2)
 
 
+def classify(df: pd.DataFrame, beta_coefs: np.array, P_threshold: int) -> list:
+    res_set = []
+    df_without_class_attr = df.drop('Class', axis=1)
+    for i in df.index:
+        disc_fun_result = round(sum((df_without_class_attr.loc[i] * beta_coefs)), 2)
+        real_class = 'K1' if df.loc[i]['Class'] == 1 else 'K2'
+        predicted_class = 'K1' if disc_fun_result >= P_threshold else 'K2'
+        res_set.append([disc_fun_result, real_class, predicted_class])
+    return res_set
+
+
+def print_stats(classification_res: list) -> None:
+    real_K1 = [*filter(lambda res_set: res_set[1] == 'K1', classification_res)]
+    real_K2 = [*filter(lambda res_set: res_set[1] == 'K2', classification_res)]
+    real_K1_n = len(real_K1)
+    real_K2_n = len(real_K2)
+    print("Справжні класи: K1 = {}, K2 = {}". format(real_K1_n, real_K2_n))
+
+    predicted_K1 = [*filter(lambda res_set: res_set[2] == 'K1', classification_res)]
+    predicted_K2 = [*filter(lambda res_set: res_set[2] == 'K2', classification_res)]
+    predicted_K1_n = len(predicted_K1)
+    predicted_K2_n = len(predicted_K2)
+    print("Прогнозовані класи: K1 = {}, K2 = {}".format(predicted_K1_n, predicted_K2_n))
+
+    misclassified = [*filter(lambda res_set: res_set[2] != res_set[1], classification_res)]
+    misclassified_n = len(misclassified)
+    print("Кількість помилково класифікованих примірників = {}".format(misclassified_n))
+
+    rel_error = misclassified_n / len(classification_res)
+    print("Відносна помилка = {}".format(rel_error))
+
 def main():
-    filename = "data.csv"
-    df = load_csv(filename)
+    training_set_filename = "training_set.csv"
+    test_set_filename = "test_set.csv"
+    df = load_csv(training_set_filename)
+    test_df = load_csv(test_set_filename)
 
     # Classes dataframes views
     df_K1 = get_K1(df)
@@ -127,7 +160,7 @@ def main():
     Sk = 1 / (n1 + n2 - 2) * (n1 * Sk1 + n2 * Sk2)
 
     inv_Sk = pd.DataFrame(np.linalg.inv(Sk.values), Sk.columns, Sk.index)
-    beta_coefs = Sk * (K1_m - K2_m)
+    beta_coefs = inv_Sk * (K1_m - K2_m)
     beta_coefs = np.diagonal(beta_coefs)
 
     # M*[G/K1], M*[G/K2]
@@ -152,30 +185,47 @@ def main():
     print("D*[G/K1] =", d_g_K1)
     print("D*[G/K2] =", d_g_K2)
 
-    # Дослідження коефіцієнтів отриманої дискримінантної функції
-    label = "Коефіцієнти дискримінантної функції"
-    K1_res = df_K1_without_class_attr * beta_coefs
-    K2_res = df_K2_without_class_attr * beta_coefs
+    # Дослідження оцінок коефіцієнтів отриманої дискримінантної функції
+    label = "Оцінки коефіцієнтів дискримінантної функції"
 
-    K1_res_m = K1_res.mean()
-    K2_res_m = K2_res.mean()
-
-    thresholds_values = (K1_res_m + K2_res_m) / 2
-
-    general_set_results = df_without_class_attr * beta_coefs
-    general_set_comparison_results = general_set_results >= thresholds_values
-
-    incorrect_classified_instances = (general_set_comparison_results['X9'].astype("int") - df['Class']) != 0
-
-    col_names = ["Ознака", "Пороговий коефіцієнт"]
-    table_data = np.vstack((df_without_class_attr.columns, thresholds_values)).T
+    col_names = ["Ознака", "Оцінка коефіцієнту"]
+    table_data = np.vstack((df_without_class_attr.columns, beta_coefs)).T
 
     print()
     print_task(3.9)
     print(label)
     print(tabulate(table_data, headers=col_names, tablefmt="fancy_grid"))
 
-    print("Число неправильно класифікованих примірників:", incorrect_classified_instances.sum())
+    # 3.10 - 3.18
+    P_threshold = 68
+
+    classification_res_for_training_set = classify(df, beta_coefs, P_threshold)
+    classification_res_for_test_set = classify(test_df, beta_coefs, P_threshold)
+
+    col_names = ['Значення дискр. функії', 'Фактичний клас', 'Прогнозований клас']
+    table_data = classification_res_for_training_set
+
+    print()
+    print_task('3.10 - 3.18')
+    print()
+    print(tabulate(table_data, headers=col_names, tablefmt="fancy_grid"))
+
+    table_data = classification_res_for_test_set
+    print()
+    print(tabulate(table_data, headers=col_names, tablefmt="fancy_grid"))
+
+    print()
+    print("Обране значення порогу = {}".format(P_threshold))
+
+    print()
+    print("Класифікація навчальної вибірки")
+    print()
+    print_stats(classification_res_for_training_set)
+
+    print()
+    print("Класифікація тестової вибірки")
+    print()
+    print_stats(classification_res_for_test_set)
 
 
 if __name__ == '__main__':
