@@ -13,11 +13,11 @@ def print_task(no):
 
 
 def get_K1(df: pd.DataFrame) -> pd.DataFrame:
-    return df[df["Class"] != 1]
+    return df[df["Class"] == 1]
 
 
 def get_K2(df: pd.DataFrame) -> pd.DataFrame:
-    return df[df["Class"] == 1]
+    return df[df["Class"] != 1]
 
 
 def get_M_x_K(x_subset: pd.DataFrame) -> int:
@@ -51,6 +51,14 @@ def get_r_xi_xl_K(m_x_k: dict) -> dict:
         key = "{} = r * {}".format(comb_tuple[0], comb_tuple[1])
         dictionary[key] = value
     return dictionary
+
+
+def get_M_G_K(m_x_K: np.array, beta_coefs: np.array) -> int:
+    return sum(m_x_K * beta_coefs)
+
+
+def get_D_G_K(d_x_K: np.array, beta_coefs: np.array) -> int:
+    return sum(d_x_K * beta_coefs ** 2)
 
 
 def main():
@@ -117,10 +125,30 @@ def main():
     Sk = 1 / (n1 + n2 - 2) * (n1 * Sk1 + n2 * Sk2)
 
     inv_Sk = pd.DataFrame(np.linalg.inv(Sk.values), Sk.columns, Sk.index)
-    b_coefs = Sk * (K1_m - K2_m)
-    b_coefs = np.diagonal(b_coefs)
+    beta_coefs = Sk * (K1_m - K2_m)
+    beta_coefs = np.diagonal(beta_coefs)
 
-    print(b_coefs)
+    # M*[G/K1], M*[G/K2]
+    label = "Оцінки умовних математичних сподівань дискримінантної функції за умови, що екземпляр належить К1 або К2"
+    m_g_K1 = get_M_G_K([*m_x_K1.values()], beta_coefs)
+    m_g_K2 = get_M_G_K([*m_x_K2.values()], beta_coefs)
+
+    print()
+    print_task("3.7")
+    print(label)
+    print("M*[G/K1] =", m_g_K1)
+    print("M*[G/K2] =", m_g_K2)
+
+    # D*[G/K1], D*[G/K2]
+    label = "Оцінки умовних дисперсій дискримінантної функції за умови, що екземпляр належить К1 або К2"
+    d_g_K1 = get_D_G_K([*d_x_K1.values()], beta_coefs)
+    d_g_K2 = get_D_G_K([*d_x_K2.values()], beta_coefs)
+
+    print()
+    print_task("3.8")
+    print(label)
+    print("D*[G/K1] =", d_g_K1)
+    print("D*[G/K2] =", d_g_K2)
 
 
 if __name__ == '__main__':
