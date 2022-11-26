@@ -105,6 +105,23 @@ def main():
     # 3.6
     # (X3 = r * X4), (X1 = r * X9) - статистично незначимі
 
+    # отримуємо бета коефіцієнти
+    K1_m = df_K1_without_class_attr.mean()
+    K2_m = df_K2_without_class_attr.mean()
+
+    Sk1 = df_K1_without_class_attr.cov()
+    Sk2 = df_K2_without_class_attr.cov()
+
+    n1 = len(df_K1)
+    n2 = len(df_K2)
+    Sk = 1 / (n1 + n2 - 2) * (n1 * Sk1 + n2 * Sk2)
+
+    inv_Sk = pd.DataFrame(np.linalg.inv(Sk.values), Sk.columns, Sk.index)
+    b_coefs = Sk * (K1_m - K2_m)
+    b_coefs = np.diagonal(b_coefs)
+
+    print(b_coefs)
+
 
 if __name__ == '__main__':
     main()
